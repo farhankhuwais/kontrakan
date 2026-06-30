@@ -9,6 +9,7 @@ export interface KosProfile {
   fasilitas_foto: string[]
   mitra: string[]
   foto_hero: string | null
+  favicon: string | null
   created_at: string
   updated_at: string
 }

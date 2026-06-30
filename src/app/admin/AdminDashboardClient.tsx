@@ -850,6 +850,46 @@ function ProfilEditor({
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-brand-text mb-2">
+            Favicon
+          </label>
+          <div className="flex items-center gap-4">
+            {profil?.favicon && (
+              <div className="relative w-10 h-10 rounded overflow-hidden border border-secondary/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={profil.favicon} alt="Favicon" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch('/api/upload-favicon', { method: 'DELETE' })
+                    window.location.reload()
+                  }}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-brand-danger text-white rounded-full text-[10px] leading-none flex items-center justify-center"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
+            <label className="cursor-pointer px-4 py-2 border-2 border-dashed border-secondary/50 rounded-card text-sm text-brand-muted hover:border-dark transition-colors">
+              {profil?.favicon ? 'Ganti Favicon' : 'Upload Favicon'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const formData = new FormData()
+                  formData.append('file', file)
+                  await fetch('/api/upload-favicon', { method: 'POST', body: formData })
+                  window.location.reload()
+                }}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-brand-text mb-1">
             Google Maps Embed URL (opsional)
           </label>
