@@ -86,7 +86,7 @@ export default function KontakSection({
                 <h3 className="font-semibold text-dark">WhatsApp</h3>
                 <p className="text-dark-muted text-sm mt-1">
                   {noWhatsapp.startsWith('62')
-                    ? `+${noWhatsapp.slice(1)}`
+                    ? `+${noWhatsapp}`
                     : noWhatsapp}
                 </p>
               </div>

@@ -82,7 +82,7 @@ export default function AdminDashboardClient() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-brand-muted hidden sm:block">
-              {profil?.no_whatsapp && `+${profil.no_whatsapp.slice(1)}`}
+               {profil?.no_whatsapp && `+${profil.no_whatsapp}`}
             </span>
             <button
               onClick={handleLogout}
@@ -286,15 +286,17 @@ function FotoThumbnail({
   const inputId = `upload-${kamarId}`
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = e.target.files
+    if (!files || files.length === 0) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('kamar_id', kamarId)
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('kamar_id', kamarId)
 
-    await fetch('/api/upload', { method: 'POST', body: formData })
+      await fetch('/api/upload', { method: 'POST', body: formData })
+    }
 
     setUploading(false)
     window.location.reload()
@@ -346,6 +348,8 @@ function FotoThumbnail({
         id={inputId}
         type="file"
         accept="image/*"
+        capture="environment"
+        multiple
         className="hidden"
         onChange={handleUpload}
         disabled={uploading}

@@ -18,7 +18,7 @@ export default function Footer({ namaKos, alamat, noWhatsapp }: FooterProps) {
             <h3 className="font-bold text-lg mb-3 tracking-tight">Kontak</h3>
             <p className="text-sm text-secondary">
               {noWhatsapp.startsWith('62')
-                ? `+${noWhatsapp.slice(1)}`
+                ? `+${noWhatsapp}`
                 : noWhatsapp}
             </p>
           </div>
