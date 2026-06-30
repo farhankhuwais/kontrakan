@@ -57,7 +57,7 @@ export default function KamarCard({ kamar, noWhatsapp, alamat, mapsEmbedUrl }: K
                     e.stopPropagation()
                     setFotoIdx((fotoIdx - 1 + fotoList.length) % fotoList.length)
                   }}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-sm"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-dark flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity hover:bg-white shadow-sm"
                   aria-label="Foto sebelumnya"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ export default function KamarCard({ kamar, noWhatsapp, alamat, mapsEmbedUrl }: K
                     e.stopPropagation()
                     setFotoIdx((fotoIdx + 1) % fotoList.length)
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-dark flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 text-dark flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity hover:bg-white shadow-sm"
                   aria-label="Foto berikutnya"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

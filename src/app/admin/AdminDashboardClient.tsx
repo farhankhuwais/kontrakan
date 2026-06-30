@@ -62,7 +62,7 @@ export default function AdminDashboardClient() {
                 onClick={() => setTab('kamar')}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   tab === 'kamar'
-                    ? 'bg-dark text-white'
+                    ? 'bg-btn text-white'
                     : 'text-brand-muted hover:text-dark'
                 }`}
               >
@@ -72,7 +72,7 @@ export default function AdminDashboardClient() {
                 onClick={() => setTab('profil')}
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   tab === 'profil'
-                    ? 'bg-dark text-white'
+                    ? 'bg-btn text-white'
                     : 'text-brand-muted hover:text-dark'
                 }`}
               >
@@ -98,7 +98,7 @@ export default function AdminDashboardClient() {
             onClick={() => setTab('kamar')}
             className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors text-center ${
               tab === 'kamar'
-                ? 'bg-dark text-white'
+                ? 'bg-btn text-white'
                 : 'text-brand-muted'
             }`}
           >
@@ -108,7 +108,7 @@ export default function AdminDashboardClient() {
             onClick={() => setTab('profil')}
             className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors text-center ${
               tab === 'profil'
-                ? 'bg-dark text-white'
+                ? 'bg-btn text-white'
                 : 'text-brand-muted'
             }`}
           >
