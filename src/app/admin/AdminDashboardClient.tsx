@@ -4,6 +4,39 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import type { KosProfile, Kamar } from '@/lib/types'
 
+async function compressImage(file: File): Promise<File> {
+  const MAX_BYTES = 5 * 1024 * 1024
+  if (file.size <= MAX_BYTES) return file
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
+  })
+
+  const MAX_DIM = 1920
+  let { width, height } = img
+  if (width > MAX_DIM || height > MAX_DIM) {
+    if (width > height) { height = Math.round(height * MAX_DIM / width); width = MAX_DIM }
+    else { width = Math.round(width * MAX_DIM / height); height = MAX_DIM }
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(img, 0, 0, width, height)
+  URL.revokeObjectURL(img.src)
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      const name = file.name.replace(/\.[^.]+$/, '.jpg')
+      resolve(new File([blob!], name, { type: 'image/jpeg' }))
+    }, 'image/jpeg', 0.85)
+  })
+}
+
 type Tab = 'kamar' | 'profil'
 
 export default function AdminDashboardClient() {
@@ -291,8 +324,9 @@ function FotoThumbnail({
 
     setUploading(true)
     for (const file of files) {
+      const compressed = await compressImage(file)
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', compressed)
       formData.append('kamar_id', kamarId)
 
       await fetch('/api/upload', { method: 'POST', body: formData })
@@ -789,8 +823,9 @@ function ProfilEditor({
                     const file = e.target.files?.[0]
                     if (!file) return
                     setUploadingFasilitas(true)
+                    const compressed = await compressImage(file)
                     const formData = new FormData()
-                    formData.append('file', file)
+                    formData.append('file', compressed)
                     const res = await fetch('/api/upload-fasilitas', { method: 'POST', body: formData })
                     if (res.ok) {
                       const data = await res.json()
@@ -843,8 +878,9 @@ function ProfilEditor({
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
+                  const compressed = await compressImage(file)
                   const formData = new FormData()
-                  formData.append('file', file)
+                  formData.append('file', compressed)
                   await fetch('/api/upload-hero', { method: 'POST', body: formData })
                   window.location.reload()
                 }}
@@ -883,8 +919,9 @@ function ProfilEditor({
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
+                  const compressed = await compressImage(file)
                   const formData = new FormData()
-                  formData.append('file', file)
+                  formData.append('file', compressed)
                   await fetch('/api/upload-favicon', { method: 'POST', body: formData })
                   window.location.reload()
                 }}
