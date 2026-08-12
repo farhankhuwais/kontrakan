@@ -1,0 +1,30 @@
+name: kontrakan
+services:
+  kontrakan:
+    container_name: kontrakan
+    image: kontrakan:latest
+    restart: unless-stopped
+    ports:
+      - target: 3000
+        published: 3000
+        protocol: tcp
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/nextjs.png
+    x-casaos:
+      architectures:
+        - amd64
+      main: kontrakan
+      icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/nextjs.png
+      title:
+        en_US: Achi Kosan
+        id_ID: Achi Kosan
+      category: Web
+      description:
+        en_US: Landing page & admin panel kosan (Next.js + Supabase)
+        id_ID: Landing page & admin panel kosan (Next.js + Supabase)
+      tagline:
+        en_US: Landing page kosan
+        id_ID: Landing page kosan
+      author: farhankhuwais
+      developer: farhankhuwais
+      store_app_id: kontrakan
