@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const fileExt = file.name.split('.').pop()
   const fileName = `${kamarId}/${Date.now()}.${fileExt}`
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
+  const { error: uploadError } = await supabase.storage
     .from('kamar-photos')
     .upload(fileName, file, {
       cacheControl: '3600',

@@ -47,7 +47,6 @@ export default function AdminDashboardClient() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    setLoading(true)
     try {
       const [profilRes, kamarRes] = await Promise.all([
         fetch('/api/profil'),
@@ -63,7 +62,8 @@ export default function AdminDashboardClient() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    const timer = setTimeout(fetchData, 0)
+    return () => clearTimeout(timer)
   }, [fetchData])
 
   async function handleLogout() {
@@ -155,7 +155,6 @@ export default function AdminDashboardClient() {
           <KamarManager
             kamarList={kamarList}
             onRefresh={fetchData}
-            profil={profil}
           />
         )}
         {tab === 'profil' && (
@@ -171,11 +170,9 @@ export default function AdminDashboardClient() {
 function KamarManager({
   kamarList,
   onRefresh,
-  profil,
 }: {
   kamarList: Kamar[]
   onRefresh: () => void
-  profil: KosProfile | null
 }) {
   const [editing, setEditing] = useState<Kamar | null>(null)
   const [showForm, setShowForm] = useState(false)

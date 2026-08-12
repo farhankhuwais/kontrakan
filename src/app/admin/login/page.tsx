@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLogin() {
@@ -111,12 +112,12 @@ export default function AdminLogin() {
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
 
-          <a
+          <Link
             href="/"
             className="block text-center text-sm text-brand-muted hover:text-dark transition-colors"
           >
             &larr; Kembali ke beranda
-          </a>
+          </Link>
         </form>
       </div>
     </div>
