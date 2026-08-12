@@ -1,12 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import AdminDashboardClient from './AdminDashboardClient'
 
 export default async function AdminPage() {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const user = await getSessionUser()
 
-  if (!session) {
+  if (!user) {
     redirect('/admin/login')
   }
 

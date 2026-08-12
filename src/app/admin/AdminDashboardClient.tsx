@@ -67,8 +67,7 @@ export default function AdminDashboardClient() {
   }, [fetchData])
 
   async function handleLogout() {
-    const supabase = (await import('@/lib/supabase/client')).createClient()
-    await supabase.auth.signOut()
+    await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/admin/login')
     router.refresh()
   }
@@ -853,11 +852,7 @@ function ProfilEditor({
                   onClick={async () => {
                     const res = await fetch('/api/upload-hero', { method: 'DELETE' })
                     if (res.ok) {
-                      const supabase = (await import('@/lib/supabase/client')).createClient()
-                      const { data: fresh } = await supabase.from('kos_profile').select('*').limit(1).single()
-                      if (fresh) {
-                        window.location.reload()
-                      }
+                      window.location.reload()
                     }
                   }}
                   className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-brand-danger text-white rounded-full text-xs leading-none flex items-center justify-center"

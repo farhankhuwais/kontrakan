@@ -24,9 +24,9 @@ Full-stack landing page untuk kos/kontrakan dengan admin panel. Dibangun dengan 
 |-------|------------|
 | **Framework** | Next.js 16 (App Router) |
 | **Styling** | Tailwind CSS v4 + Heroicons v2 |
-| **Database** | Supabase (PostgreSQL) |
-| **Auth** | Supabase Auth (email/password) |
-| **Storage** | Supabase Storage (gambar) |
+| **Database** | PostgreSQL 16 (Docker, lokal di server) |
+| **Auth** | Custom session (scrypt + cookie httpOnly) |
+| **Storage** | File lokal (volume Docker, disajikan via /api/files) |
 | **Bahasa** | TypeScript |
 
 ## Persiapan
@@ -39,28 +39,37 @@ cd achi-home-rental
 npm install
 ```
 
-### 2. Supabase Setup
+### 2. Database Setup (Postgres lokal)
 
-Buat project di [supabase.com](https://supabase.com), lalu jalankan SQL migration di **SQL Editor** secara berurutan:
+Jalankan Postgres (misal via Docker):
 
-1. `supabase/migrations/001_init.sql` — tabel `kos_profile`, `kamar`, `kamar_foto`
-2. `supabase/migrations/002_rls_policies.sql` — RLS policies
-3. `supabase/migrations/003_storage_rls.sql` — storage bucket RLS
-4. `supabase/migrations/004_alamat_kamar.sql` — kolom `alamat` & `maps_url`
-5. `supabase/migrations/005_fasilitas_foto_mitra.sql` — kolom `fasilitas_foto` & `mitra`
+```bash
+docker run -d --name postgres-kontrakan \
+  -e POSTGRES_USER=kontrakan \
+  -e POSTGRES_PASSWORD=kontrakan123 \
+  -e POSTGRES_DB=kontrakan \
+  -v postgres_kontrakan_data:/var/lib/postgresql/data \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
+
+Lalu terapkan migration dari `supabase/migrations/` secara berurutan
+(001 s.d. 007) ke database `kontrakan`.
 
 ### 3. Environment Variables
 
 Buat `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
+DATABASE_URL=postgres://kontrakan:kontrakan123@localhost:5432/kontrakan
+UPLOAD_DIR=./uploads
 ```
 
 ### 4. Create Admin User
 
-Di Supabase Dashboard → **Authentication** → **Users** → **Add User**, buat akun admin (email + password).
+Admin seed dibuat otomatis oleh migration `007_auth_local.sql`:
+- Email: `admin@achi-kosan.com`
+- Password: `AchiKosan#2026`  ← WAJIB diganti segera (ganti via database)
 
 ### 5. Run Dev Server
 
@@ -70,18 +79,18 @@ npm run dev
 
 Buka `http://localhost:3000` untuk landing page, `http://localhost:3000/admin/login` untuk admin.
 
-## Deploy ke Vercel
+## Deploy
+
+Build image + jalankan (butuh Docker):
 
 ```bash
-npm run build    # pastikan build sukses
+docker build -t kontrakan:latest .
+docker compose up -d
 ```
 
-1. Push repo ke GitHub
-2. Import di [vercel.com](https://vercel.com)
-3. Set environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
-4. Deploy
-
-> Pastikan Supabase project mengizinkan koneksi dari publik (RLS sudah diatur di migration 002 & 003).
+> `docker-compose.yml` sudah berisi environment DATABASE_URL (via `host.docker.internal`),
+> volume untuk upload, dan metadata CasaOS. Postgres berjalan sebagai container terpisah
+> (`postgres-kontrakan`) di port 5432.
 
 ## Struktur Project
 

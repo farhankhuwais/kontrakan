@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { getSessionUser } from '@/lib/auth'
+import { saveUpload, deleteUpload } from '@/lib/storage'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const user = await getSessionUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -17,58 +17,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File and kamar_id required' }, { status: 400 })
   }
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${kamarId}/${Date.now()}.${fileExt}`
+  const url = await saveUpload(file, 'kamar')
+  const db = createClient()
 
-  const { error: uploadError } = await supabase.storage
-    .from('kamar-photos')
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false,
-    })
+  const rows = await db`
+    insert into kamar_foto (kamar_id, foto_url, urutan)
+    values (${kamarId}, ${url}, 0)
+    returning *
+  `
 
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 })
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from('kamar-photos')
-    .getPublicUrl(fileName)
-
-  const { data: fotoData, error: fotoError } = await supabase
-    .from('kamar_foto')
-    .insert({
-      kamar_id: kamarId,
-      foto_url: publicUrl,
-      urutan: 0,
-    })
-    .select()
-    .single()
-
-  if (fotoError) {
-    return NextResponse.json({ error: fotoError.message }, { status: 500 })
-  }
-
-  return NextResponse.json(fotoData)
+  return NextResponse.json(rows[0])
 }
 
 export async function DELETE(request: Request) {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const user = await getSessionUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { foto_id, foto_url } = await request.json()
 
   if (foto_url) {
-    const path = foto_url.split('/').slice(-2).join('/')
-    await supabase.storage.from('kamar-photos').remove([path])
+    await deleteUpload(foto_url)
   }
 
   if (foto_id) {
-    await supabase.from('kamar_foto').delete().eq('id', foto_id)
+    const db = createClient()
+    await db`delete from kamar_foto where id = ${foto_id}`
   }
 
   return NextResponse.json({ success: true })

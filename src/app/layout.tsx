@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/db";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,20 +14,27 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const supabase = await createClient()
-  const { data: profil } = await supabase
-    .from('kos_profile')
-    .select('nama_kos, favicon')
-    .limit(1)
-    .maybeSingle()
+  let namaKos: string | null = null
+  let favicon: string | null = null
+
+  try {
+    const db = createClient()
+    const rows = await db<{ nama_kos: string; favicon: string | null }[]>`
+      select nama_kos, favicon from kos_profile limit 1
+    `
+    namaKos = rows[0]?.nama_kos ?? null
+    favicon = rows[0]?.favicon ?? null
+  } catch {
+    // DB belum siap (mis. saat build) — pakai default
+  }
 
   return {
-    title: profil?.nama_kos
-      ? `${profil.nama_kos} - Kamar Nyaman untuk Mahasiswa & Pekerja`
+    title: namaKos
+      ? `${namaKos} - Kamar Nyaman untuk Mahasiswa & Pekerja`
       : "Achi Kosan - Kamar Nyaman untuk Mahasiswa & Pekerja",
     description:
       "Temukan kamar kos nyaman dan terjangkau. Lingkungan bersih, aman, dan dekat dengan kampus serta pusat kota.",
-    icons: profil?.favicon ? { icon: profil.favicon } : undefined,
+    icons: favicon ? { icon: favicon } : undefined,
   }
 }
 

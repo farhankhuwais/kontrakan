@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { getSessionUser } from '@/lib/auth'
+import { saveUpload, deleteUpload } from '@/lib/storage'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const user = await getSessionUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -16,77 +16,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File required' }, { status: 400 })
   }
 
-  const { data: existing } = await supabase
-    .from('kos_profile')
-    .select('id, foto_hero')
-    .limit(1)
-    .single()
-
+  const db = createClient()
+  const rows = await db`select id, foto_hero from kos_profile limit 1`
+  const existing = rows[0]
   if (!existing) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `hero/${Date.now()}.${fileExt}`
+  const url = await saveUpload(file, 'hero')
 
-  const { error: uploadError } = await supabase.storage
-    .from('kamar-photos')
-    .upload(fileName, file, { cacheControl: '3600', upsert: true })
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 })
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from('kamar-photos')
-    .getPublicUrl(fileName)
-
+  // Hapus foto hero lama kalau ada
   if (existing.foto_hero) {
-    const oldPath = existing.foto_hero.split('/').slice(-2).join('/')
-    await supabase.storage.from('kamar-photos').remove([oldPath])
+    await deleteUpload(existing.foto_hero)
   }
 
-  const { data: profil, error: profilError } = await supabase
-    .from('kos_profile')
-    .update({ foto_hero: publicUrl })
-    .eq('id', existing.id)
-    .select()
-    .single()
+  const updated = await db`
+    update kos_profile set foto_hero = ${url}
+    where id = ${existing.id}
+    returning *
+  `
 
-  if (profilError) {
-    return NextResponse.json({ error: profilError.message }, { status: 500 })
-  }
-
-  return NextResponse.json(profil)
+  return NextResponse.json(updated[0])
 }
 
 export async function DELETE() {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const user = await getSessionUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data: profil } = await supabase
-    .from('kos_profile')
-    .select('id, foto_hero')
-    .limit(1)
-    .single()
-
+  const db = createClient()
+  const rows = await db`select id, foto_hero from kos_profile limit 1`
+  const profil = rows[0]
   if (!profil) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
   if (profil.foto_hero) {
-    const path = profil.foto_hero.split('/').slice(-2).join('/')
-    await supabase.storage.from('kamar-photos').remove([path])
+    await deleteUpload(profil.foto_hero)
   }
 
-  await supabase
-    .from('kos_profile')
-    .update({ foto_hero: null })
-    .eq('id', profil.id)
-
+  await db`update kos_profile set foto_hero = null where id = ${profil.id}`
   return NextResponse.json({ success: true })
 }

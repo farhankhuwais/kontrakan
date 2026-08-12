@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { getSessionUser } from '@/lib/auth'
+import { saveUpload, deleteUpload } from '@/lib/storage'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const user = await getSessionUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -17,82 +17,64 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File required' }, { status: 400 })
   }
 
-  const { data: existing } = await supabase
-    .from('kos_profile')
-    .select('id, fasilitas_foto')
-    .limit(1)
-    .single()
-
+  const db = createClient()
+  const rows = await db`select id, fasilitas_foto from kos_profile limit 1`
+  const existing = rows[0]
   if (!existing) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
-  const fileExt = file.name.split('.').pop()
-  const fileName = `fasilitas/${Date.now()}.${fileExt}`
+  const url = await saveUpload(file, 'fasilitas')
 
-  const { error: uploadError } = await supabase.storage
-    .from('kamar-photos')
-    .upload(fileName, file, { cacheControl: '3600', upsert: true })
+  const currentFotos: string[] = Array.isArray(existing.fasilitas_foto)
+    ? existing.fasilitas_foto
+    : []
 
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 })
+  let newFotos: string[]
+  if (indexStr !== null) {
+    const idx = parseInt(indexStr, 10)
+    // Hapus file lama yang diganti
+    if (currentFotos[idx]) {
+      await deleteUpload(currentFotos[idx])
+    }
+    newFotos = currentFotos.map((f, i) => (i === idx ? url : f))
+  } else {
+    newFotos = [...currentFotos, url]
   }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from('kamar-photos')
-    .getPublicUrl(fileName)
+  const updated = await db`
+    update kos_profile set fasilitas_foto = ${newFotos}
+    where id = ${existing.id}
+    returning *
+  `
 
-  const currentFotos: string[] = (existing.fasilitas_foto as string[]) ?? []
-  const newFotos = indexStr !== null
-    ? currentFotos.map((f, i) => i === parseInt(indexStr) ? publicUrl : f)
-    : [...currentFotos, publicUrl]
-
-  const { data: profil, error: profilError } = await supabase
-    .from('kos_profile')
-    .update({ fasilitas_foto: newFotos })
-    .eq('id', existing.id)
-    .select()
-    .single()
-
-  if (profilError) {
-    return NextResponse.json({ error: profilError.message }, { status: 500 })
-  }
-
-  return NextResponse.json(profil)
+  return NextResponse.json(updated[0])
 }
 
 export async function DELETE(request: Request) {
-  const supabase = await createClient()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const user = await getSessionUser()
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { foto_url } = await request.json()
+  const db = createClient()
 
-  const { data: profil } = await supabase
-    .from('kos_profile')
-    .select('id, fasilitas_foto')
-    .limit(1)
-    .single()
-
+  const rows = await db`select id, fasilitas_foto from kos_profile limit 1`
+  const profil = rows[0]
   if (!profil) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
   if (foto_url) {
-    const path = foto_url.split('/').slice(-2).join('/')
-    await supabase.storage.from('kamar-photos').remove([path])
+    await deleteUpload(foto_url)
   }
 
-  const currentFotos: string[] = (profil.fasilitas_foto as string[]) ?? []
+  const currentFotos: string[] = Array.isArray(profil.fasilitas_foto)
+    ? profil.fasilitas_foto
+    : []
   const newFotos = currentFotos.filter((f) => f !== foto_url)
 
-  await supabase
-    .from('kos_profile')
-    .update({ fasilitas_foto: newFotos })
-    .eq('id', profil.id)
-
+  await db`update kos_profile set fasilitas_foto = ${newFotos} where id = ${profil.id}`
   return NextResponse.json({ success: true })
 }

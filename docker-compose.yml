@@ -4,10 +4,17 @@ services:
     container_name: kontrakan
     image: kontrakan:latest
     restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://kontrakan:kontrakan123@host.docker.internal:5432/kontrakan
+      UPLOAD_DIR: /data/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - target: 3000
         published: 3000
         protocol: tcp
+    volumes:
+      - kontrakan_uploads:/data/uploads
     labels:
       icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/nextjs.png
     x-casaos:
@@ -20,11 +27,13 @@ services:
         id_ID: Achi Kosan
       category: Web
       description:
-        en_US: Landing page & admin panel kosan (Next.js + Supabase)
-        id_ID: Landing page & admin panel kosan (Next.js + Supabase)
+        en_US: Landing page & admin panel kosan (Next.js + Postgres lokal)
+        id_ID: Landing page & admin panel kosan (Next.js + Postgres lokal)
       tagline:
         en_US: Landing page kosan
         id_ID: Landing page kosan
       author: farhankhuwais
       developer: farhankhuwais
       store_app_id: kontrakan
+volumes:
+  kontrakan_uploads:
